@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Xem Phim</title>
+<style>
+    body {
+        margin: 0;
+        font-family: 'Poppins', sans-serif;
+        background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+        color: white;
+        text-align: center;
+        padding: 20px;
+    }
+
+    .top-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    h1 {
+        font-size: 1.8em;
+        background: linear-gradient(90deg, #0dbfb9, #3333ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    button {
+        background: #ff0066;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 1em;
+        transition: background 0.3s ease;
+    }
+
+    button:hover {
+        background: #ff3399;
+    }
+
+    .video-container {
+        max-width: 1300px;
+        margin: auto;
+        margin-bottom: 20px;
+    }
+
+    video {
+        width: 100%;
+        border-radius: 10px;
+    }
+
+    .episodes {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: flex-start;
+    }
+
+    .episode {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 6px 10px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+
+    .episode.active {
+        background: #ff0066;
+    }
+
+    .episode:hover {
+        background: #ff3399;
+    }
+
+    .title {
+        text-align: center;
+        font-weight: bold;
+        background: linear-gradient(90deg, #ff00cc, #3333ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .coder {
+        text-align: right;
+        font-weight: bold;
+        background: linear-gradient(90deg, #ff00cc, #3333ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    /* Responsive cho mobile */
+    @media (max-width: 768px) {
+        .top-bar {
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            font-size: 1.4em;
+            text-align: center;
+        }
+        button {
+            width: 100%;
+            font-size: 1em;
+        }
+        .episodes {
+            justify-content: center;
+        }
+    }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+    <button id="backBtn">⬅ Quay lại</button>
+    <h1 class="title" id="movieTitle"></h1>
+    <h1 class="coder">code by: Tống Trần Kiên</h1>
+</div>
+
+<div class="video-container">
+    <video id="videoPlayer" controls></video>
+</div>
+
+<div class="episodes" id="episodes"></div>
+
+<script>
+function toSlug(str) {
+    return str
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .trim()
+        .replace(/\s+/g, '-');
+}
+
+// Xác định homeURL dựa trên GitHub Pages
+const isGithubPages = window.location.hostname.includes('github.io');
+const urlParts = window.location.pathname.split('/').filter(part => part !== '');
+const root_URL = isGithubPages ? (urlParts[0] || 'test-phim') : ''; // Nếu là GitHub Pages thì lấy pathname, không thì rỗng
+
+// Nút quay lại
+document.getElementById('backBtn').addEventListener('click', () => {
+    window.location.href = `${window.location.origin}${root_URL ? '/' + root_URL : ''}/`;
+});
+
+const urlParams = new URLSearchParams(window.location.search);
+const csvFile = urlParams.get('csv');
+const movieTitle = urlParams.get('title');
+
+document.getElementById('movieTitle').textContent = movieTitle;
+document.title = `Xem phim ${movieTitle} - Tập 01 HD Vietsub`;
+
+async function loadEpisodes() {
+    const res = await fetch(csvFile);
+    const text = await res.text();
+    const rows = text.split('\n').slice(1).filter(row => row.trim() !== '');
+
+    const episodes = rows.map(row => {
+        const cols = row.split(',');
+        return { title: cols[0], url: cols[1], tap: cols[2], coder: cols[3], time: cols[4] };
+    });
+
+    const episodeList = document.getElementById('episodes');
+    episodeList.innerHTML = '';
+
+    episodes.forEach((ep, index) => {
+        const btn = document.createElement('div');
+        const epNum = String(index + 1).padStart(2, '0');
+        btn.textContent = epNum;
+        btn.className = 'episode';
+        btn.addEventListener('click', () => {
+            document.getElementById('videoPlayer').src = ep.url;
+            document.querySelectorAll('.episode').forEach(e => e.classList.remove('active'));
+            btn.classList.add('active');
+
+            // Tiêu đề trên giao diện
+            document.getElementById('movieTitle').textContent = `${movieTitle} - Tập ${epNum}`;
+
+            // Tiêu đề trên trình duyệt
+            document.title = `${movieTitle} - Tập ${epNum} - by Tống Trần Kiên`;
+
+            // Slug trên URL
+            history.replaceState({}, '', `/watch/${toSlug(movieTitle)}/tap-${epNum}`);
+        });
+        episodeList.appendChild(btn);
+
+        if (index === 0) {
+            btn.click();
+        }
+    });
+}
+
+loadEpisodes();
+</script>
+</body>
+</html>

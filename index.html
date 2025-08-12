@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kho Phim Tổng Hợp by Tống Trần Kiên</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico" />
+<style>
+    body {
+        margin: 0;
+        font-family: 'Poppins', sans-serif;
+        background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+        color: white;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    header {
+        text-align: center;
+        padding: 40px 20px;
+        font-size: 3em;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 3px;
+        background: linear-gradient(90deg, #004aad, #4b636e, #1a3c34);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: glow 2s ease-in-out infinite alternate;
+    }
+
+    @keyframes glow {
+        0% {
+            text-shadow: 0 0 5px #004aad, 0 0 10px #004aad, 0 0 20px rgba(0, 74, 173, 0.7);
+        }
+        50% {
+            text-shadow: 0 0 10px #4b636e, 0 0 20px #4b636e, 0 0 30px rgba(75, 99, 110, 0.6);
+        }
+        100% {
+            text-shadow: 0 0 15px #1a3c34, 0 0 25px #1a3c34, 0 0 40px rgba(26, 60, 52, 0.5);
+        }
+    }
+
+    .container {
+        flex: 1;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: repeat(2, 1fr);
+        gap: 20px;
+        padding: 0 20px 40px;
+        max-width: 1200px;
+        margin: auto;
+    }
+
+    .card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(8px);
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 0 8px #0ad336, 0 0 12px #0ad336, 0 0 20px rgba(10, 211, 54, 0.4);
+        cursor: pointer;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        min-height: 250px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .card:hover {
+        transform: translateY(-8px) scale(1.03);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.5), 0 0 20px #0ad336;
+    }
+
+    .card h3 {
+        margin: 0 0 10px;
+        font-size: 1.2em;
+        color: #51bffa;
+        text-align: center;
+    }
+
+    .card p {
+        font-size: 0.95em;
+        color: #ddd;
+        text-align: justify;
+        margin: 5px 0;
+    }
+
+    .pagination {
+        text-align: center;
+        margin-bottom: 40px;
+        padding: 0 15px;
+    }
+
+    .pagination button {
+        background: red;
+        border: none;
+        color: white;
+        padding: 8px 14px;
+        margin: 0 4px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 1em;
+        transition: background 0.3s ease;
+    }
+
+    .pagination button.active {
+        background: #1f03d7;
+    }
+
+    .pagination button:hover {
+        background: rgb(203, 162, 162);
+    }
+
+    @media (max-width: 768px) {
+        header {
+            font-size: 1.8em;
+            padding: 20px 10px;
+        }
+
+        .container {
+            grid-template-columns: 1fr;
+            grid-template-rows: repeat(2, 1fr);
+            gap: 15px;
+            padding: 0 10px 20px;
+        }
+
+        .card {
+            min-height: 200px;
+            padding: 15px;
+            box-shadow: 0 0 6px #0ad336, 0 0 10px #0ad336, 0 0 15px rgba(10, 211, 54, 0.4);
+        }
+
+        .card h3 {
+            font-size: 1.1em;
+        }
+
+        .card p {
+            font-size: 0.9em;
+        }
+
+        .pagination button {
+            padding: 6px 12px;
+            font-size: 0.9em;
+        }
+    }
+</style>
+</head>
+
+<body>
+<header>Kho Phim Tổng Hợp by Tống Trần Kiên</header>
+
+<div class="container" id="movieList"></div>
+<div class="pagination" id="pagination"></div>
+
+<script>
+const isMobile = window.innerWidth <= 768;
+const itemsPerPage = isMobile ? 2 : 6;
+let currentPage = 1;
+let movies = [];
+
+async function loadMovies() {
+    const res = await fetch('phim.json');
+    movies = await res.json();
+    renderMovies();
+    renderPagination();
+}
+
+function renderMovies() {
+    const list = document.getElementById('movieList');
+    list.innerHTML = '';
+    const start = (currentPage - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    const pageItems = movies.slice(start, end);
+
+    // Tạo mảng đủ số phần tử (2 trên mobile, 6 trên laptop)
+    const fixedItems = [...pageItems];
+    while (fixedItems.length < itemsPerPage) {
+        fixedItems.push(null);
+    }
+
+    fixedItems.forEach(movie => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        if (movie) {
+            card.innerHTML = `
+                <h3>${movie.title}</h3>
+                <p>${movie.description1 || ''}</p>
+                <p>${movie.description2 || ''}</p>
+                <p>${movie.description3 || ''}</p>
+                <p>${movie.description4 || ''}</p>
+                <p>${movie.description5 || ''}</p>
+            `;
+            card.addEventListener('click', () => {
+                window.location.href = `watch.html?csv=${movie.csv}&title=${encodeURIComponent(movie.title)}`;
+            });
+        } else {
+            card.style.visibility = 'hidden';
+        }
+        list.appendChild(card);
+    });
+}
+
+function renderPagination() {
+    const totalPages = Math.ceil(movies.length / itemsPerPage);
+    const pagination = document.getElementById('pagination');
+    pagination.innerHTML = '';
+
+    for (let i = 1; i <= totalPages; i++) {
+        const btn = document.createElement('button');
+        btn.innerText = i;
+        if (i === currentPage) btn.classList.add('active');
+        btn.addEventListener('click', () => {
+            currentPage = i;
+            renderMovies();
+            renderPagination();
+        });
+        pagination.appendChild(btn);
+    }
+}
+
+loadMovies();
+</script>
+</body>
+</html>
